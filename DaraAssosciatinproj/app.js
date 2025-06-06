@@ -58,6 +58,34 @@ app.get('/profile', isLoggedIn, async (req, res) => {
     res.render("profile", { user });
 });
 
+// like
+app.get('/like/:id', isLoggedIn, async (req, res) => {
+    const post = await postModel.findOne({ _id: req.params.id }).populate('user');
+    if(post.likes.indexOf(req.user.userid)===-1){
+        post.likes.push(req.user.userid);
+    }else{
+        post.likes.splice(post.likes.indexOf(req.user.userid),1);
+    }
+        
+    await post.save();
+    res.redirect("/profile");
+});
+
+
+//edit functionality
+app.get('/edit/:id', isLoggedIn, async (req, res) => {
+    let post = await postModel.findOne({ _id: req.params.id }).populate('user');
+    
+    res.render("edit",{post});
+});
+
+//edit functionality
+app.post('/update/:id', isLoggedIn, async (req, res) => {
+    let post = await postModel.findOneAndUpdate({ _id: req.params.id },{content:req.body.content});
+    
+    res.redirect("/profile");
+});
+
 // Create a post
 app.post('/post', isLoggedIn, async (req, res) => {
     try {

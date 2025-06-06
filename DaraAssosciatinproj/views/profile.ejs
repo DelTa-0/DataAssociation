@@ -27,9 +27,11 @@
                 <p>
                     <%=post.content%>
                 </p>
+                <small class="mt-2 inline-block"><%=post.likes.length%> likes</small>
                 <div class="btns flex mt-5">
-                    <a href="" class="text-blue-500">Like</a>
-                    <a href="" class="ml-3 text-yellow-500">Edit</a>
+                    <a href="/like/<%=post._id%>" class="text-blue-500">
+                        <%=post.likes.indexOf(user._id)===-1 ? "like":"Dislike"%></a>
+                    <a href="/edit/<%=post._id%>" class="ml-3 text-yellow-500">Edit</a>
                 </div>
             </div>
         </div>
