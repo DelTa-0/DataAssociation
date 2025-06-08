@@ -3,34 +3,39 @@ const ejs = require('ejs');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
-const multer = require('multer');
+// const multer = require('multer');
+const upload = require('./config/multerconfig');
 const path = require('path');
 
 const userModel = require('./models/user');
 const postModel = require('./models/post');
-const crypto = require('crypto');
+const { log } = require('console');
+// const crypto = require('crypto');
 
 const app = express();
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname,'public')));
 app.use(cookieParser());
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './public/images/uploads')
-  },
-  filename: function (req, file, cb) {
-    
-    crypto.randomBytes(12,function(err,bytes){
-        const fn=bytes.toString("hex")+path.extname(file.originalname)
-        cb(null, fn)
-    })
-   
-  }
-})
 
-const upload = multer({ storage: storage })
+//Direct way to use multer
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, './public/images/uploads')
+//   },
+//   filename: function (req, file, cb) {
+    
+//     crypto.randomBytes(12,function(err,bytes){
+//         const fn=bytes.toString("hex")+path.extname(file.originalname)
+//         cb(null, fn)
+//     })
+   
+//   }
+// })
+
+// const upload = multer({ storage: storage })
 
 // Redirect to login or profile based on token
 app.get('/', (req, res) => {
@@ -45,9 +50,25 @@ app.get('/', (req, res) => {
     }
 });
 
+
+//upload profile picture
+app.get('/profile/upload', (req, res) => {
+    res.render("profileupload")
+});
+
+app.post('/profile/upload',isLoggedIn,upload.single("image"), async(req,res)=>{
+    let user=await userModel.findOne({email:req.user.email});
+    user.profilepic=req.file.filename;
+    await user.save();
+    res.redirect("/profile")
+    
+})
+
 app.get('/register',(req,res)=>{
     res.render('index')
 })
+
+
 
 // Registration route
 app.post('/register', async (req, res) => {
@@ -106,7 +127,7 @@ app.post('/update/:id', isLoggedIn, async (req, res) => {
 });
 
 // Create a post
-app.post('/post', upload.single("images"),isLoggedIn, async (req, res) => {
+app.post('/post',isLoggedIn, async (req, res) => {
     try {
         const { content } = req.body;
         const user = await userModel.findOne({ email: req.user.email });
